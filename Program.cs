@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
@@ -9,7 +8,7 @@ using Wallcat.Util;
 namespace Wallcat
 {
     // TODO: Update Wallpaper Daily
-    // TODO: Make cat blink when busy
+    // TODO: Display info about the wallpaper
 
     internal static class Program
     {
@@ -23,7 +22,7 @@ namespace Wallcat
             Console.WriteLine($@"Current Channel: {Properties.Settings.Default.CurrentChannel}");
             Console.WriteLine($@"Current Wallpaper: {Properties.Settings.Default.CurrentWallpaper}");
             Console.WriteLine($@"Last Checked: {Properties.Settings.Default.LastChecked}");
-            Console.WriteLine($@"Storage: {ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath}");
+            Console.WriteLine($@"Storage: {System.Configuration.ConfigurationManager.OpenExeConfiguration(System.Configuration.ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath}");
 #endif
 
             Application.EnableVisualStyles();
@@ -35,39 +34,48 @@ namespace Wallcat
     public class MyCustomApplicationContext : ApplicationContext
     {
         private readonly NotifyIcon _trayIcon;
+        private readonly ContextMenu _contextMenu;
+        private readonly IconAnimation _iconAnimation;
         private readonly WallcatService _wallcatService;
 
         public MyCustomApplicationContext()
         {
+            Application.ApplicationExit += OnApplicationExit;
+
             _wallcatService = new WallcatService();
-
-            var contextMenu = new ContextMenu();
-            contextMenu.MenuItems.Add(new MenuItem("Channels") { Enabled = false });
-            var channels = _wallcatService.GetChannels();
-            foreach (var channel in channels)
-            {
-                contextMenu.MenuItems.Add(new MenuItem(channel.title, SelectChannel) { Tag = channel.id });
-            }
-
-            contextMenu.MenuItems.Add(new MenuItem("-") { Enabled = false });
-            contextMenu.MenuItems.Add(new MenuItem("Credit", Website));
-            contextMenu.MenuItems.Add(new MenuItem("Exit", Exit));
-
-            // Set Current Channel
-            if (string.IsNullOrWhiteSpace(Properties.Settings.Default.CurrentChannel))
-            {
-                Properties.Settings.Default.CurrentChannel = channels.FirstOrDefault(x => x.isDefault)?.id;
-                Properties.Settings.Default.Save();
-            }
-            UpdateWallpaper();
-
-            // Initialize Tray Icon
+            _contextMenu = new ContextMenu();
             _trayIcon = new NotifyIcon
             {
                 Icon = Resources.AppIcon,
-                ContextMenu = contextMenu,
+                ContextMenu = _contextMenu,
                 Visible = true
             };
+            _iconAnimation = new IconAnimation(ref _trayIcon);
+
+            // Add Menu Items
+            _iconAnimation.Start();
+            var channels = _wallcatService.GetChannels();
+            _contextMenu.MenuItems.Add("Channels", channels.Select(x => new MenuItem(x.title, SelectChannel) { Tag = x.id }).ToArray());
+            _contextMenu.MenuItems.AddRange(new[]
+            {
+                new MenuItem("Credit", (sender, args) => Process.Start("https://wall.cat/")),
+                new MenuItem("Exit", (sender, args) => Application.Exit())
+            });
+
+            // Set Default Channel
+            if (string.IsNullOrWhiteSpace(Properties.Settings.Default.CurrentChannel))
+            {
+                var channel = channels.FirstOrDefault(x => x.isDefault);
+                if (channel != null)
+                {
+                    Properties.Settings.Default.CurrentChannel = channel.id;
+                    Properties.Settings.Default.Save();
+                    UpdateWallpaper();
+
+                    _trayIcon.ShowBalloonTip(10 * 1000, "Welcome to Wallcat", $"Enjoy the {channel.title} channel!", ToolTipIcon.Info);
+                }
+            }
+            _iconAnimation.Stop();
         }
 
         private void UpdateWallpaper()
@@ -80,33 +88,34 @@ namespace Wallcat
             }
         }
 
-
         private void SelectChannel(object sender, EventArgs e)
         {
-            var channel = (string)((MenuItem)sender).Tag;
-            var wallpaper = _wallcatService.GetWallpaper(channel);
-            if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper) return;
-            var filePath = DownloadFile.Get(wallpaper.url.o);
-            SetWallpaper.Apply(filePath, SetWallpaper.Style.Span);
+            _iconAnimation.Start();
 
-            // Update Settings
-            Properties.Settings.Default.CurrentChannel = channel;
-            Properties.Settings.Default.CurrentWallpaper = wallpaper.id;
-            Properties.Settings.Default.LastChecked = DateTime.Now.Date;
-            Properties.Settings.Default.Save();
+            try
+            {
+                var channel = (string) ((MenuItem) sender).Tag;
+                var wallpaper = _wallcatService.GetWallpaper(channel);
+                if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper) return;
+                var filePath = DownloadFile.Get(wallpaper.url.o);
+                SetWallpaper.Apply(filePath, SetWallpaper.Style.Span);
+
+                // Update Settings
+                Properties.Settings.Default.CurrentChannel = channel;
+                Properties.Settings.Default.CurrentWallpaper = wallpaper.id;
+                Properties.Settings.Default.LastChecked = DateTime.Now.Date;
+                Properties.Settings.Default.Save();
+            }
+            finally
+            {
+                _iconAnimation.Stop();
+            }
         }
 
-        private static void Website(object sender, EventArgs e)
-        {
-            Process.Start("https://wall.cat/");
-        }
-
-        private void Exit(object sender, EventArgs e)
+        private void OnApplicationExit(object sender, EventArgs e)
         {
             // Hide tray icon, otherwise it will remain shown until user mouses over it
             _trayIcon.Visible = false;
-
-            Application.Exit();
         }
     }
 }

@@ -91,6 +91,7 @@
     </Compile>
     <Compile Include="Services\WallcatService.cs" />
     <Compile Include="Util\DownloadFile.cs" />
+    <Compile Include="Util\IconAnimation.cs" />
     <Compile Include="Util\SetWallpaper.cs" />
     <EmbeddedResource Include="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
