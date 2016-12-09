@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
@@ -8,7 +7,7 @@ using Wallcat.Util;
 
 namespace Wallcat
 {
-    // TODO: Update Wallpaper Daily
+    // TODO: Dual Monitor Support
 
     internal static class Program
     {
@@ -33,6 +32,7 @@ namespace Wallcat
 
     public class MyCustomApplicationContext : ApplicationContext
     {
+        private System.Threading.Timer _timer;
         private readonly NotifyIcon _trayIcon;
         private readonly ContextMenu _contextMenu;
         private readonly IconAnimation _iconAnimation;
@@ -79,20 +79,28 @@ namespace Wallcat
                 {
                     Properties.Settings.Default.CurrentChannel = channel;
                     Properties.Settings.Default.Save();
-                    UpdateWallpaper();
 
                     _trayIcon.ShowBalloonTip(10 * 1000, "Welcome to Wallcat", $"Enjoy the {channel.title} channel!", ToolTipIcon.Info);
                 }
             }
 
+            // Check for wallpaper update
+            UpdateWallpaper();
+
+            // Setup Timer
+            MidnightUpdate();
+            
             _iconAnimation.Stop();
         }
 
         private void UpdateWallpaper()
         {
-            var channel = Properties.Settings.Default.CurrentChannel;
-            if (channel != null)
-                SelectChannel(new MenuItem { Tag = channel }, null);
+            if (Properties.Settings.Default.LastChecked != DateTime.Now.Date)
+            {
+                var channel = Properties.Settings.Default.CurrentChannel;
+                if (channel != null)
+                    SelectChannel(new MenuItem { Tag = channel }, null);
+            }
         }
 
         private void SelectChannel(object sender, EventArgs e)
@@ -143,6 +151,20 @@ namespace Wallcat
                 (sender, args) => Process.Start(wallpaper.sourceUrl + campaign))
             { Tag = tag });
             _contextMenu.MenuItems.Add(2, new MenuItem("-") { Enabled = false, Tag = tag });
+        }
+
+        private void MidnightUpdate()
+        {
+            var updateTime = new TimeSpan(24, 01, 0) - DateTime.Now.TimeOfDay;
+
+            _timer = new System.Threading.Timer(x =>
+            {
+                // Restart Timer
+                MidnightUpdate();
+
+                // Update Wallpaper
+                UpdateWallpaper();
+            }, null, updateTime, System.Threading.Timeout.InfiniteTimeSpan);
         }
 
         private void OnApplicationExit(object sender, EventArgs e)

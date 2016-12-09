@@ -21,7 +21,6 @@ namespace Wallcat.Services
             var response = Client.GetAsync($"{ApiHost}/channels/{channelId}/image/{DateTime.Now:yyyy-MM-dd}T00:00:00.000Z").Result;
             response.EnsureSuccessStatusCode();
             return new JavaScriptSerializer().Deserialize<WallpaperResponse>(response.Content.ReadAsStringAsync().Result).payload.image;
-
         }
     }
 
