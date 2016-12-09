@@ -25,10 +25,9 @@ namespace Wallcat.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string CurrentChannel {
+        public global::Wallcat.Services.Channel CurrentChannel {
             get {
-                return ((string)(this["CurrentChannel"]));
+                return ((global::Wallcat.Services.Channel)(this["CurrentChannel"]));
             }
             set {
                 this["CurrentChannel"] = value;
@@ -37,10 +36,9 @@ namespace Wallcat.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string CurrentWallpaper {
+        public global::Wallcat.Services.Wallpaper CurrentWallpaper {
             get {
-                return ((string)(this["CurrentWallpaper"]));
+                return ((global::Wallcat.Services.Wallpaper)(this["CurrentWallpaper"]));
             }
             set {
                 this["CurrentWallpaper"] = value;

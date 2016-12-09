@@ -2,10 +2,10 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Wallcat.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="CurrentChannel" Type="System.String" Scope="User">
+    <Setting Name="CurrentChannel" Type="Wallcat.Services.Channel" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="CurrentWallpaper" Type="System.String" Scope="User">
+    <Setting Name="CurrentWallpaper" Type="Wallcat.Services.Wallpaper" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="LastChecked" Type="System.DateTime" Scope="User">

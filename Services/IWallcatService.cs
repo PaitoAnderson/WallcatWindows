@@ -19,18 +19,21 @@ namespace Wallcat.Services
     {
         public string id { get; set; }
         public string title { get; set; }
+
+        public WallpaperPartner partner { get; set; }
         public WallpaperUrls url { get; set; }
 
         public string sourceUrl { get; set; }
+    }
 
-        public string webLocation { get; set; }
+    public class WallpaperPartner
+    {
+        public string first { get; set; }
+        public string last { get; set; }
     }
 
     public class WallpaperUrls
     {
-        public string s { get; set; }
-        public string m { get; set; }
-        public string l { get; set; }
         public string o { get; set; }
     }
 }

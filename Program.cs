@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
@@ -8,7 +9,6 @@ using Wallcat.Util;
 namespace Wallcat
 {
     // TODO: Update Wallpaper Daily
-    // TODO: Display info about the wallpaper
 
     internal static class Program
     {
@@ -51,41 +51,48 @@ namespace Wallcat
                 Visible = true
             };
             _iconAnimation = new IconAnimation(ref _trayIcon);
-
-            // Add Menu Items
             _iconAnimation.Start();
+
+            // Add Menu items
             var channels = _wallcatService.GetChannels();
-            _contextMenu.MenuItems.Add("Channels", channels.Select(x => new MenuItem(x.title, SelectChannel) { Tag = x.id }).ToArray());
+            _contextMenu.MenuItems.Add(new MenuItem("Featured Channels") { Enabled = false });
+            _contextMenu.MenuItems.AddRange(channels.Select(channel => new MenuItem(channel.title, SelectChannel) { Tag = channel }).ToArray());
             _contextMenu.MenuItems.AddRange(new[]
             {
-                new MenuItem("Credit", (sender, args) => Process.Start("https://wall.cat/")),
-                new MenuItem("Exit", (sender, args) => Application.Exit())
+                new MenuItem("-") { Enabled = false },
+                new MenuItem("Create Channel...", (sender, args) => Process.Start("https://wall.cat/partners")),
+                new MenuItem("-") { Enabled = false },
+                new MenuItem("Quit Wallcat", (sender, args) => Application.Exit())
             });
 
-            // Set Default Channel
-            if (string.IsNullOrWhiteSpace(Properties.Settings.Default.CurrentChannel))
+            // Set Current Image Info
+            if (Properties.Settings.Default.CurrentWallpaper != null)
+            {
+                UpdateMenuCurrentImage(Properties.Settings.Default.CurrentWallpaper);
+            }
+
+            // Onboarding
+            if (Properties.Settings.Default.CurrentChannel == null)
             {
                 var channel = channels.FirstOrDefault(x => x.isDefault);
                 if (channel != null)
                 {
-                    Properties.Settings.Default.CurrentChannel = channel.id;
+                    Properties.Settings.Default.CurrentChannel = channel;
                     Properties.Settings.Default.Save();
                     UpdateWallpaper();
 
                     _trayIcon.ShowBalloonTip(10 * 1000, "Welcome to Wallcat", $"Enjoy the {channel.title} channel!", ToolTipIcon.Info);
                 }
             }
+
             _iconAnimation.Stop();
         }
 
         private void UpdateWallpaper()
         {
-            if (Properties.Settings.Default.LastChecked != DateTime.Now.Date)
-            {
-                var channel = Properties.Settings.Default.CurrentChannel;
-                if (string.IsNullOrWhiteSpace(channel) == false)
-                    SelectChannel(new MenuItem { Tag = channel }, null);
-            }
+            var channel = Properties.Settings.Default.CurrentChannel;
+            if (channel != null)
+                SelectChannel(new MenuItem { Tag = channel }, null);
         }
 
         private void SelectChannel(object sender, EventArgs e)
@@ -94,22 +101,48 @@ namespace Wallcat
 
             try
             {
-                var channel = (string) ((MenuItem) sender).Tag;
-                var wallpaper = _wallcatService.GetWallpaper(channel);
-                if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper) return;
+                var channel = (Channel)((MenuItem)sender).Tag;
+                var wallpaper = _wallcatService.GetWallpaper(channel.id);
+                if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper?.id) return;
                 var filePath = DownloadFile.Get(wallpaper.url.o);
                 SetWallpaper.Apply(filePath, SetWallpaper.Style.Span);
 
                 // Update Settings
                 Properties.Settings.Default.CurrentChannel = channel;
-                Properties.Settings.Default.CurrentWallpaper = wallpaper.id;
+                Properties.Settings.Default.CurrentWallpaper = wallpaper;
                 Properties.Settings.Default.LastChecked = DateTime.Now.Date;
                 Properties.Settings.Default.Save();
+
+                // Update Menu
+                UpdateMenuCurrentImage(wallpaper);
             }
             finally
             {
                 _iconAnimation.Stop();
             }
+        }
+
+        private void UpdateMenuCurrentImage(Wallpaper wallpaper)
+        {
+            const string tag = "CurrentImage";
+            const string campaign = "?utm_source=windows&utm_medium=menuItem&utm_campaign=wallcat";
+
+            // Remove previous Current Image (If Any)
+            for (var i = _contextMenu.MenuItems.Count - 1; i >= 0; i--)
+            {
+                var s = _contextMenu.MenuItems[i].Tag as string;
+                if (s != null && s == tag)
+                {
+                    _contextMenu.MenuItems.Remove(_contextMenu.MenuItems[i]);
+                }
+            }
+
+            // Add Current Image
+            _contextMenu.MenuItems.Add(0, new MenuItem("Current Image") { Enabled = false, Tag = tag });
+            _contextMenu.MenuItems.Add(1, new MenuItem($"{wallpaper.title} by {wallpaper.partner.first} {wallpaper.partner.last}",
+                (sender, args) => Process.Start(wallpaper.sourceUrl + campaign))
+            { Tag = tag });
+            _contextMenu.MenuItems.Add(2, new MenuItem("-") { Enabled = false, Tag = tag });
         }
 
         private void OnApplicationExit(object sender, EventArgs e)
