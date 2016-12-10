@@ -1,11 +1,13 @@
 ﻿
+using System.Threading.Tasks;
+
 namespace Wallcat.Services
 {
     public interface IWallcatService
     {
-        Channel[] GetChannels();
+        Task<Channel[]> GetChannels();
 
-        Wallpaper GetWallpaper(string channelId);
+        Task<Wallpaper> GetWallpaper(string channelId);
     }
 
     public class Channel

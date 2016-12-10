@@ -4,7 +4,7 @@ namespace Wallcat.Util
 {
     public class IconAnimation
     {
-        private readonly Timer _timer = new Timer {Interval = 500};
+        private readonly Timer _timer = new Timer { Interval = 500 };
         private readonly NotifyIcon _notifyIcon;
         private int _currentIteration;
         private const int Frames = 1;

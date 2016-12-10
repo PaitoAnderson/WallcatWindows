@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 
 namespace Wallcat.Services
@@ -9,18 +10,18 @@ namespace Wallcat.Services
         private const string ApiHost = @"https://beta.wall.cat/api/v1";
 
         private static readonly HttpClient Client = new HttpClient();
-        public Channel[] GetChannels()
+        public async Task<Channel[]> GetChannels()
         {
-            var response = Client.GetAsync($"{ApiHost}/channels").Result;
+            var response = await Client.GetAsync($"{ApiHost}/channels");
             response.EnsureSuccessStatusCode();
-            return new JavaScriptSerializer().Deserialize<ChannelResponse>(response.Content.ReadAsStringAsync().Result).payload;
+            return new JavaScriptSerializer().Deserialize<ChannelResponse>(await response.Content.ReadAsStringAsync()).payload;
         }
 
-        public Wallpaper GetWallpaper(string channelId)
+        public async Task<Wallpaper> GetWallpaper(string channelId)
         {
-            var response = Client.GetAsync($"{ApiHost}/channels/{channelId}/image/{DateTime.Now:yyyy-MM-dd}T00:00:00.000Z").Result;
+            var response = await Client.GetAsync($"{ApiHost}/channels/{channelId}/image/{DateTime.Now:yyyy-MM-dd}T00:00:00.000Z");
             response.EnsureSuccessStatusCode();
-            return new JavaScriptSerializer().Deserialize<WallpaperResponse>(response.Content.ReadAsStringAsync().Result).payload.image;
+            return new JavaScriptSerializer().Deserialize<WallpaperResponse>(await response.Content.ReadAsStringAsync()).payload.image;
         }
     }
 

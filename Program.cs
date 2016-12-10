@@ -32,7 +32,6 @@ namespace Wallcat
 
     public class MyCustomApplicationContext : ApplicationContext
     {
-        private System.Threading.Timer _timer;
         private readonly NotifyIcon _trayIcon;
         private readonly ContextMenu _contextMenu;
         private readonly IconAnimation _iconAnimation;
@@ -54,7 +53,7 @@ namespace Wallcat
             _iconAnimation.Start();
 
             // Add Menu items
-            var channels = _wallcatService.GetChannels();
+            var channels = _wallcatService.GetChannels().Result;
             _contextMenu.MenuItems.Add(new MenuItem("Featured Channels") { Enabled = false });
             _contextMenu.MenuItems.AddRange(channels.Select(channel => new MenuItem(channel.title, SelectChannel) { Tag = channel }).ToArray());
             _contextMenu.MenuItems.AddRange(new[]
@@ -89,7 +88,7 @@ namespace Wallcat
 
             // Setup Timer
             MidnightUpdate();
-            
+
             _iconAnimation.Stop();
         }
 
@@ -103,16 +102,16 @@ namespace Wallcat
             }
         }
 
-        private void SelectChannel(object sender, EventArgs e)
+        private async void SelectChannel(object sender, EventArgs e)
         {
             _iconAnimation.Start();
 
             try
             {
                 var channel = (Channel)((MenuItem)sender).Tag;
-                var wallpaper = _wallcatService.GetWallpaper(channel.id);
+                var wallpaper = await _wallcatService.GetWallpaper(channel.id);
                 if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper?.id) return;
-                var filePath = DownloadFile.Get(wallpaper.url.o);
+                var filePath = await DownloadFile.Get(wallpaper.url.o);
                 SetWallpaper.Apply(filePath, SetWallpaper.Style.Span);
 
                 // Update Settings
@@ -157,7 +156,7 @@ namespace Wallcat
         {
             var updateTime = new TimeSpan(24, 01, 0) - DateTime.Now.TimeOfDay;
 
-            _timer = new System.Threading.Timer(x =>
+            new System.Threading.Timer(x =>
             {
                 // Restart Timer
                 MidnightUpdate();

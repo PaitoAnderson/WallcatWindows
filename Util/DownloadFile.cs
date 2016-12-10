@@ -1,14 +1,16 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Wallcat.Util
 {
     public static class DownloadFile
     {
-        public static string Get(string url)
+        public static async Task<string> Get(string url)
         {
             var filePath = Path.GetTempFileName();
-            new WebClient().DownloadFile(url, filePath);
+            await new WebClient().DownloadFileTaskAsync(new Uri(url), filePath);
             return filePath;
         }
     }
