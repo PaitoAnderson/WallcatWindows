@@ -7,12 +7,14 @@ namespace Wallcat.Util
 {
     public class SetWallpaper
     {
-        const int SPI_SETDESKWALLPAPER = 20;
+        const uint SPI_SETDESKWALLPAPER = 0x14;
+        const uint SPI_GETDESKWALLPAPER = 0x73;
+
         const int SPIF_UPDATEINIFILE = 0x01;
         const int SPIF_SENDWININICHANGE = 0x02;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+        private static extern int SystemParametersInfo(uint uAction, int uParam, string lpvParam, int fuWinIni);
 
         public enum Style
         {

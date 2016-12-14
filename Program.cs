@@ -2,12 +2,13 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
+using Microsoft.Win32;
 using Wallcat.Services;
 using Wallcat.Util;
 
 namespace Wallcat
 {
-    // TODO: Dual Monitor Support
+    // TODO: Multi Monitor Support
 
     internal static class Program
     {
@@ -36,10 +37,12 @@ namespace Wallcat
         private readonly ContextMenu _contextMenu;
         private readonly IconAnimation _iconAnimation;
         private readonly WallcatService _wallcatService;
+        private System.Threading.Timer _timer;
 
         public MyCustomApplicationContext()
         {
             Application.ApplicationExit += OnApplicationExit;
+            SystemEvents.PowerModeChanged += OnPowerChange;
 
             _wallcatService = new WallcatService();
             _contextMenu = new ContextMenu();
@@ -83,10 +86,7 @@ namespace Wallcat
                 }
             }
 
-            // Check for wallpaper update
             UpdateWallpaper();
-
-            // Setup Timer
             MidnightUpdate();
 
             _iconAnimation.Stop();
@@ -154,15 +154,11 @@ namespace Wallcat
 
         private void MidnightUpdate()
         {
-            var updateTime = new TimeSpan(24, 01, 0) - DateTime.Now.TimeOfDay;
-
-            new System.Threading.Timer(x =>
+            var updateTime = new TimeSpan(24, 1, 0) - DateTime.Now.TimeOfDay;
+            _timer = new System.Threading.Timer(x =>
             {
-                // Restart Timer
-                MidnightUpdate();
-
-                // Update Wallpaper
                 UpdateWallpaper();
+                MidnightUpdate();
             }, null, updateTime, System.Threading.Timeout.InfiniteTimeSpan);
         }
 
@@ -170,6 +166,20 @@ namespace Wallcat
         {
             // Hide tray icon, otherwise it will remain shown until user mouses over it
             _trayIcon.Visible = false;
+        }
+
+        private void OnPowerChange(object sender, PowerModeChangedEventArgs e)
+        {
+            switch (e.Mode)
+            {
+                case PowerModes.Resume:
+                    UpdateWallpaper();
+                    MidnightUpdate();
+                    break;
+                case PowerModes.Suspend:
+                    _timer.Dispose();
+                    break;
+            }
         }
     }
 }
