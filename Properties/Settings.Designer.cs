@@ -47,9 +47,9 @@ namespace Wallcat.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        public global::System.DateTime LastChecked {
+        public global::System.DateTime? LastChecked {
             get {
-                return ((global::System.DateTime)(this["LastChecked"]));
+                return ((global::System.DateTime?)(this["LastChecked"]));
             }
             set {
                 this["LastChecked"] = value;
