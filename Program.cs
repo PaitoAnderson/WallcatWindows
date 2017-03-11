@@ -174,7 +174,7 @@ namespace Wallcat
             {
                 UpdateWallpaper();
                 MidnightUpdate();
-            }, null, updateTime, System.Threading.Timeout.InfiniteTimeSpan);
+            }, null, updateTime, Timeout.InfiniteTimeSpan);
         }
 
         private void OnApplicationExit(object sender, EventArgs e)
@@ -188,7 +188,7 @@ namespace Wallcat
             switch (e.Mode)
             {
                 case PowerModes.Resume:
-                    UpdateWallpaper();
+                    Retry.Do(() => UpdateWallpaper(), TimeSpan.FromSeconds(15));
                     MidnightUpdate();
                     break;
                 case PowerModes.Suspend:
