@@ -127,7 +127,8 @@ namespace Wallcat
                 var wallpaper = await _wallcatService.GetWallpaper(channel.id);
                 if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper?.id) return;
                 var filePath = await DownloadFile.Get(wallpaper.url.o);
-                SetWallpaper.Apply(filePath, SetWallpaper.Style.Span);
+                var style = Environment.OSVersion.Version.Major >= 8 ? SetWallpaper.Style.Span : SetWallpaper.Style.Fill;
+                SetWallpaper.Apply(filePath, style);
 
                 // Update Settings
                 Properties.Settings.Default.CurrentChannel = channel;
