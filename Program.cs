@@ -1,9 +1,11 @@
-﻿using System;
+﻿using IWshRuntimeLibrary;
+using Microsoft.Win32;
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using Microsoft.Win32;
 using Wallcat.Services;
 using Wallcat.Util;
 
@@ -37,12 +39,16 @@ namespace Wallcat
 
         private static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
         {
+#if DEBUG
             MessageBox.Show(e.Exception.ToString(), "Thread Exception!");
+#endif
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+#if DEBUG
             MessageBox.Show((e.ExceptionObject as Exception).ToString(), "Unhandled Exception!");
+#endif
         }
     }
 
@@ -73,11 +79,12 @@ namespace Wallcat
             // Add Menu items
             var channels = _wallcatService.GetChannels().Result;
             _contextMenu.MenuItems.Add(new MenuItem("Featured Channels") { Enabled = false });
-            _contextMenu.MenuItems.AddRange(channels.Select(channel => new MenuItem(channel.title, SelectChannel) { Tag = channel }).ToArray());
+            _contextMenu.MenuItems.AddRange(channels.Select(channel => new MenuItem(channel.title, SelectChannel) { Tag = channel, Checked = IsCurrentChannel(channel) }).ToArray());
             _contextMenu.MenuItems.AddRange(new[]
             {
                 new MenuItem("-") { Enabled = false },
-                new MenuItem("Create Channel...", (sender, args) => Process.Start("https://wall.cat/partners")),
+                new MenuItem("Create Channel...", (sender, args) => Process.Start("https://beta.wall.cat/partners")),
+                new MenuItem("Start at login", (sender, args) => CreateStartupShortcut()) { Checked = IsEnabledAtStartup() },
                 new MenuItem("-") { Enabled = false },
                 new MenuItem("Quit Wallcat", (sender, args) => Application.Exit())
             });
@@ -149,14 +156,26 @@ namespace Wallcat
         {
             const string tag = "CurrentImage";
             const string campaign = "?utm_source=windows&utm_medium=menuItem&utm_campaign=wallcat";
-
-            // Remove previous Current Image (If Any)
+            
             for (var i = _contextMenu.MenuItems.Count - 1; i >= 0; i--)
             {
-                var s = _contextMenu.MenuItems[i].Tag as string;
-                if (s != null && s == tag)
+                // Remove previous Current Image (If Any)
+                if (_contextMenu.MenuItems[i].Tag is string s)
                 {
-                    _contextMenu.MenuItems.Remove(_contextMenu.MenuItems[i]);
+                    if (s == tag)
+                    {
+                        _contextMenu.MenuItems.Remove(_contextMenu.MenuItems[i]);
+                    }
+                }
+
+                // Update Checkmark
+                if (_contextMenu.MenuItems[i].Tag is Channel c)
+                {
+                    _contextMenu.MenuItems[i].Checked = false;
+                    if (c.id == wallpaper.channel.id)
+                    {
+                        _contextMenu.MenuItems[i].Checked = true;
+                    }
                 }
             }
 
@@ -195,6 +214,52 @@ namespace Wallcat
                 case PowerModes.Suspend:
                     _timer.Dispose();
                     break;
+            }
+        }
+
+        private void CreateStartupShortcut()
+        {
+            string pathToExe = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string pathToShortcut = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "Wallcat.lnk");
+
+            if (IsEnabledAtStartup())
+            {
+                System.IO.File.Delete(pathToShortcut);
+            }
+            else
+            {
+                var shortcut = (IWshShortcut)new WshShell().CreateShortcut(pathToShortcut);
+
+                shortcut.Description = "Enjoy a new, beautiful wallpaper, every day.";
+                shortcut.TargetPath = pathToExe;
+                shortcut.Save();
+            }
+
+            foreach (MenuItem menuItem in _contextMenu.MenuItems)
+            {
+                if (menuItem.Text == "Start at login")
+                {
+                    menuItem.Checked = IsEnabledAtStartup();
+                    break;
+                }
+            }
+        }
+
+        private static bool IsEnabledAtStartup()
+        {
+            return System.IO.File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "Wallcat.lnk"));
+        }
+
+        private static bool IsCurrentChannel(Channel channel)
+        {
+            var currentWallpaper = Properties.Settings.Default.CurrentWallpaper;
+            if (currentWallpaper != null)
+            {
+                return channel.id == currentWallpaper.channel.id;
+            }
+            else
+            {
+                return channel.isDefault;
             }
         }
     }

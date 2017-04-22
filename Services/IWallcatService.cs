@@ -23,6 +23,7 @@ namespace Wallcat.Services
         public string title { get; set; }
 
         public WallpaperPartner partner { get; set; }
+        public WallpaperChannel channel { get; set; }
         public WallpaperUrls url { get; set; }
 
         public string sourceUrl { get; set; }
@@ -32,6 +33,11 @@ namespace Wallcat.Services
     {
         public string first { get; set; }
         public string last { get; set; }
+    }
+
+    public class WallpaperChannel
+    {
+        public string id { get; set; }
     }
 
     public class WallpaperUrls

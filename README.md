@@ -1,4 +1,4 @@
-Unofficial Wallcat for Windows
+Wallcat for Windows
 ==============================
 
 ![Demo](https://github.com/PaitoAnderson/WallcatWindows/raw/master/demo.png)
@@ -7,5 +7,6 @@ Unofficial Wallcat for Windows
 
 Contributors
 ============
+[@dustin](https://github.com/dustinsenos)
 [@driskull](https://github.com/driskull)  
 [@singular0](https://github.com/singular0)  
