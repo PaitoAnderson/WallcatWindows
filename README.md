@@ -7,6 +7,6 @@ Wallcat for Windows
 
 Contributors
 ============
-[@dustin](https://github.com/dustinsenos)
+[@dustin](https://github.com/dustinsenos)  
 [@driskull](https://github.com/driskull)  
 [@singular0](https://github.com/singular0)  
