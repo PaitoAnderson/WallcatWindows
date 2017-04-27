@@ -89,6 +89,7 @@
     </Compile>
     <Compile Include="Services\WallcatService.cs" />
     <Compile Include="Util\DownloadFile.cs" />
+    <Compile Include="Services\GoogleAnalytics.cs" />
     <Compile Include="Util\IconAnimation.cs" />
     <Compile Include="Util\Retry.cs" />
     <Compile Include="Util\SetWallpaper.cs" />

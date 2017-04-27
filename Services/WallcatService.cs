@@ -10,6 +10,7 @@ namespace Wallcat.Services
         private const string ApiHost = @"https://beta.wall.cat/api/v1";
 
         private static readonly HttpClient Client = new HttpClient();
+
         public async Task<Channel[]> GetChannels()
         {
             var response = await Client.GetAsync($"{ApiHost}/channels");

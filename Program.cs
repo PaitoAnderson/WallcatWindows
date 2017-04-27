@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Wallcat.Services;
 using Wallcat.Util;
@@ -41,6 +42,8 @@ namespace Wallcat
         {
 #if DEBUG
             MessageBox.Show(e.Exception.ToString(), "Thread Exception!");
+#else
+            new GoogleAnalytics().SubmitException(e.Exception.Message).Wait();
 #endif
         }
 
@@ -48,6 +51,8 @@ namespace Wallcat
         {
 #if DEBUG
             MessageBox.Show((e.ExceptionObject as Exception).ToString(), "Unhandled Exception!");
+#else
+            new GoogleAnalytics().SubmitException((e.ExceptionObject as Exception).Message).Wait();
 #endif
         }
     }
@@ -58,6 +63,7 @@ namespace Wallcat
         private readonly ContextMenu _contextMenu;
         private readonly IconAnimation _iconAnimation;
         private readonly WallcatService _wallcatService;
+        private readonly GoogleAnalytics _googleAnalytics;
         private System.Threading.Timer _timer;
 
         public MyCustomApplicationContext()
@@ -66,6 +72,7 @@ namespace Wallcat
             SystemEvents.PowerModeChanged += OnPowerChange;
 
             _wallcatService = new WallcatService();
+            _googleAnalytics = new GoogleAnalytics();
             _contextMenu = new ContextMenu();
             _trayIcon = new NotifyIcon
             {
@@ -106,7 +113,13 @@ namespace Wallcat
 
                     _trayIcon.ShowBalloonTip(10 * 1000, "Welcome to Wallcat", $"Enjoy the {channel.title} channel!", ToolTipIcon.Info);
                 }
+
+                // Google Analytics
+                Properties.Settings.Default.UniqueIdentifier = Guid.NewGuid();
+                _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appInstalled).Wait();
             }
+
+            _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appLaunched).Wait();
 
             UpdateWallpaper();
             MidnightUpdate();
@@ -130,6 +143,16 @@ namespace Wallcat
 
             try
             {
+                if (Properties.Settings.Default.CurrentChannel != null && e != null)
+                {
+                    await _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.channel, GoogleAnalyticsAction.channelUnsubscribed,
+                        Properties.Settings.Default.CurrentChannel.title,
+                        new[] {
+                            new DimensionTuple(GoogleAnalyticsDimension.channelId, Properties.Settings.Default.CurrentChannel.id),
+                            new DimensionTuple(GoogleAnalyticsDimension.channelTitle, Properties.Settings.Default.CurrentChannel.title)
+                        });
+                }
+
                 var channel = (Channel)((MenuItem)sender).Tag;
                 var wallpaper = await _wallcatService.GetWallpaper(channel.id);
                 if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper?.id) return;
@@ -145,6 +168,16 @@ namespace Wallcat
 
                 // Update Menu
                 UpdateMenuCurrentImage(wallpaper);
+
+                if (e != null)
+                {
+                    await _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.channel, GoogleAnalyticsAction.channelSubscribed,
+                        channel.title,
+                        new[] {
+                        new DimensionTuple(GoogleAnalyticsDimension.channelId, channel.id),
+                        new DimensionTuple(GoogleAnalyticsDimension.channelTitle, channel.title)
+                        });
+                }
             }
             finally
             {
@@ -156,7 +189,7 @@ namespace Wallcat
         {
             const string tag = "CurrentImage";
             const string campaign = "?utm_source=windows&utm_medium=menuItem&utm_campaign=wallcat";
-            
+
             for (var i = _contextMenu.MenuItems.Count - 1; i >= 0; i--)
             {
                 // Remove previous Current Image (If Any)
@@ -201,6 +234,8 @@ namespace Wallcat
         {
             // Hide tray icon, otherwise it will remain shown until user mouses over it
             _trayIcon.Visible = false;
+
+            _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appQuit).Wait();
         }
 
         private void OnPowerChange(object sender, PowerModeChangedEventArgs e)

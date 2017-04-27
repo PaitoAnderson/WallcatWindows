@@ -11,5 +11,8 @@
     <Setting Name="LastChecked" Type="System.DateTime" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="UniqueIdentifier" Type="System.Guid" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>
