@@ -106,6 +106,7 @@ namespace Wallcat.Services
                 new KeyValuePair<string, string>("v", 1.ToString()),
                 new KeyValuePair<string, string>("tid", GoogleAnalyticsTrackingID),
                 new KeyValuePair<string, string>("cid", Properties.Settings.Default.UniqueIdentifier.Value.ToString()),
+                new KeyValuePair<string, string>("ul", System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName),
                 new KeyValuePair<string, string>("ds", "Windows"),
                 new KeyValuePair<string, string>("an", "Wallcat for Windows"),
                 new KeyValuePair<string, string>("av", Assembly.GetExecutingAssembly().GetName().Version.ToString())
