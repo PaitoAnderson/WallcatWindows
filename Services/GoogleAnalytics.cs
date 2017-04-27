@@ -72,6 +72,7 @@ namespace Wallcat.Services
             try
             {
                 var content = GoogleAnalyticsSetup();
+                content.Add(new KeyValuePair<string, string>("t", "event"));
                 content.Add(new KeyValuePair<string, string>("ec", category.ToString()));
                 content.Add(new KeyValuePair<string, string>("ea", action.ToString()));
                 content.Add(new KeyValuePair<string, string>("el", label));
@@ -89,7 +90,8 @@ namespace Wallcat.Services
         {
             try
             {
-                var content = GoogleAnalyticsSetup();
+                var content = GoogleAnalyticsSetup(); 
+                content.Add(new KeyValuePair<string, string>("t", "exception"));
                 content.Add(new KeyValuePair<string, string>("exd", exceptionDescription));
 
                 await Client.PostAsync($"{ApiHost}/collect", new FormUrlEncodedContent(content.ToArray()));
@@ -104,7 +106,6 @@ namespace Wallcat.Services
                 new KeyValuePair<string, string>("v", 1.ToString()),
                 new KeyValuePair<string, string>("tid", GoogleAnalyticsTrackingID),
                 new KeyValuePair<string, string>("cid", Properties.Settings.Default.UniqueIdentifier.Value.ToString()),
-                new KeyValuePair<string, string>("t", "event"),
                 new KeyValuePair<string, string>("ds", "Windows"),
                 new KeyValuePair<string, string>("an", "Wallcat for Windows"),
                 new KeyValuePair<string, string>("av", Assembly.GetExecutingAssembly().GetName().Version.ToString())
