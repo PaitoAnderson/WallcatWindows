@@ -31,8 +31,20 @@ namespace Wallcat.Services
 
     public class WallpaperPartner
     {
+        public string id { get; set; }
         public string first { get; set; }
         public string last { get; set; }
+
+        public string name
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(last))
+                    return first;
+
+                return $"{first} {last}";
+            }
+        }
     }
 
     public class WallpaperChannel

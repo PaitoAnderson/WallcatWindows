@@ -5,18 +5,18 @@ using System.Runtime.InteropServices;
 
 namespace Wallcat.Util
 {
+    public enum DesktopWallpaperPosition
+    {
+        Center = 0,
+        Tile = 1,
+        Stretch = 2,
+        Fit = 3,
+        Fill = 4,
+        Span = 5,
+    }
+
     public class SetWallpaper
     {
-        public enum DesktopWallpaperPosition
-        {
-            Center = 0,
-            Tile = 1,
-            Stretch = 2,
-            Fit = 3,
-            Fill = 4,
-            Span = 5,
-        }
-
         [ComImport]
         [Guid("B92B56A9-8B55-4E14-9A89-0199BBB6F93B")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.Win32;
 
 namespace Wallcat.Util
 {
@@ -16,7 +16,7 @@ namespace Wallcat.Util
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern int SystemParametersInfo(uint uAction, int uParam, string lpvParam, int fuWinIni);
 
-        public static void Apply(string tempFilePath, SetWallpaper.DesktopWallpaperPosition style)
+        public static void Apply(string tempFilePath, DesktopWallpaperPosition style)
         {
             var appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             var destWallFilePath = Path.Combine(appDataFolder + @"\Microsoft\Windows\Themes", "WallcatWallpaper.tmp");
@@ -28,32 +28,32 @@ namespace Wallcat.Util
 
             var key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
 
-            if (style == SetWallpaper.DesktopWallpaperPosition.Fill)
+            if (style == DesktopWallpaperPosition.Fill)
             {
                 key.SetValue(@"WallpaperStyle", 10.ToString());
                 key.SetValue(@"TileWallpaper", 0.ToString());
             }
-            if (style == SetWallpaper.DesktopWallpaperPosition.Fit)
+            if (style == DesktopWallpaperPosition.Fit)
             {
                 key.SetValue(@"WallpaperStyle", 6.ToString());
                 key.SetValue(@"TileWallpaper", 0.ToString());
             }
-            if (style == SetWallpaper.DesktopWallpaperPosition.Span) // Windows 8 or newer only!
+            if (style == DesktopWallpaperPosition.Span) // Windows 8 or newer only!
             {
                 key.SetValue(@"WallpaperStyle", 22.ToString());
                 key.SetValue(@"TileWallpaper", 0.ToString());
             }
-            if (style == SetWallpaper.DesktopWallpaperPosition.Stretch)
+            if (style == DesktopWallpaperPosition.Stretch)
             {
                 key.SetValue(@"WallpaperStyle", 2.ToString());
                 key.SetValue(@"TileWallpaper", 0.ToString());
             }
-            if (style == SetWallpaper.DesktopWallpaperPosition.Tile)
+            if (style == DesktopWallpaperPosition.Tile)
             {
                 key.SetValue(@"WallpaperStyle", 0.ToString());
                 key.SetValue(@"TileWallpaper", 1.ToString());
             }
-            if (style == SetWallpaper.DesktopWallpaperPosition.Center)
+            if (style == DesktopWallpaperPosition.Center)
             {
                 key.SetValue(@"WallpaperStyle", 0.ToString());
                 key.SetValue(@"TileWallpaper", 0.ToString());

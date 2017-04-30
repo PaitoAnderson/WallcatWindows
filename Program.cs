@@ -89,7 +89,7 @@ namespace Wallcat
             _contextMenu.MenuItems.AddRange(new[]
             {
                 new MenuItem("-") { Enabled = false },
-                new MenuItem("Create Channel...", (sender, args) => Process.Start("https://beta.wall.cat/partners")),
+                new MenuItem("Create Channel...", (sender, args) => ChannelCreateWebpage()),
                 new MenuItem("Start at login", (sender, args) => CreateStartupShortcut()) { Checked = IsEnabledAtStartup() },
                 new MenuItem("-") { Enabled = false },
                 new MenuItem("Quit Wallcat", (sender, args) => Application.Exit())
@@ -158,11 +158,11 @@ namespace Wallcat
 
                 if (Environment.OSVersion.Version.Major >= 8)
                 {
-                    SetWallpaper.Apply(null, filePath, SetWallpaper.DesktopWallpaperPosition.Fill);
+                    SetWallpaper.Apply(null, filePath, DesktopWallpaperPosition.Fill);
                 }
                 else
                 {
-                    SetWallpaperLegacy.Apply(filePath, SetWallpaper.DesktopWallpaperPosition.Fill);
+                    SetWallpaperLegacy.Apply(filePath, DesktopWallpaperPosition.Fill);
                 }
 
                 // Update Settings
@@ -174,11 +174,20 @@ namespace Wallcat
                 // Update Menu
                 UpdateMenuCurrentImage(wallpaper);
 
+                await _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.wallpaper, GoogleAnalyticsAction.wallpaperSet, wallpaper.id, new[]
+                {
+                    new DimensionTuple(GoogleAnalyticsDimension.wallpaperId, wallpaper.id),
+                    new DimensionTuple(GoogleAnalyticsDimension.wallpaperTitle, wallpaper.title),
+                    new DimensionTuple(GoogleAnalyticsDimension.channelId, channel.id),
+                    new DimensionTuple(GoogleAnalyticsDimension.channelTitle, channel.title),
+                    new DimensionTuple(GoogleAnalyticsDimension.partnerId, wallpaper.partner.id),
+                    new DimensionTuple(GoogleAnalyticsDimension.partnerName, wallpaper.partner.name)
+                });
+
                 if (e != null)
                 {
                     await _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.channel, GoogleAnalyticsAction.channelSubscribed,
-                        channel.title,
-                        new[] {
+                        channel.title, new[] {
                         new DimensionTuple(GoogleAnalyticsDimension.channelId, channel.id),
                         new DimensionTuple(GoogleAnalyticsDimension.channelTitle, channel.title)
                         });
@@ -193,7 +202,6 @@ namespace Wallcat
         private void UpdateMenuCurrentImage(Wallpaper wallpaper)
         {
             const string tag = "CurrentImage";
-            const string campaign = "?utm_source=windows&utm_medium=menuItem&utm_campaign=wallcat";
 
             for (var i = _contextMenu.MenuItems.Count - 1; i >= 0; i--)
             {
@@ -220,7 +228,7 @@ namespace Wallcat
             // Add Current Image
             _contextMenu.MenuItems.Add(0, new MenuItem("Current Image") { Enabled = false, Tag = tag });
             _contextMenu.MenuItems.Add(1, new MenuItem($"{wallpaper.title} by {wallpaper.partner.first} {wallpaper.partner.last}",
-                (sender, args) => Process.Start(wallpaper.sourceUrl + campaign))
+                (sender, args) => WallpaperSourceWebpage(wallpaper))
             { Tag = tag });
             _contextMenu.MenuItems.Add(2, new MenuItem("-") { Enabled = false, Tag = tag });
         }
@@ -241,6 +249,26 @@ namespace Wallcat
             _trayIcon.Visible = false;
 
             _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appQuit).Wait();
+        }
+
+        private void ChannelCreateWebpage()
+        {
+            Process.Start("https://beta.wall.cat/partners");
+
+            _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.channel, GoogleAnalyticsAction.channelCreateTapped).Wait();
+        }
+
+        private void WallpaperSourceWebpage(Wallpaper wallpaper)
+        {
+            const string campaign = "?utm_source=windows&utm_medium=menuItem&utm_campaign=wallcat";
+            Process.Start(wallpaper.sourceUrl + campaign);
+
+            _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.wallpaper, GoogleAnalyticsAction.wallpaperSourceTapped, wallpaper.id, new[] {
+               new DimensionTuple(GoogleAnalyticsDimension.wallpaperId, wallpaper.id),
+               new DimensionTuple(GoogleAnalyticsDimension.wallpaperTitle, wallpaper.title),
+               new DimensionTuple(GoogleAnalyticsDimension.partnerId, wallpaper.partner.id),
+               new DimensionTuple(GoogleAnalyticsDimension.partnerName, wallpaper.partner.name)
+            }).Wait();
         }
 
         private void OnPowerChange(object sender, PowerModeChangedEventArgs e)
