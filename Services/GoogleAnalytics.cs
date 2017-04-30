@@ -76,12 +76,14 @@ namespace Wallcat.Services
                 content.Add(new KeyValuePair<string, string>("ec", category.ToString()));
                 content.Add(new KeyValuePair<string, string>("ea", action.ToString()));
                 content.Add(new KeyValuePair<string, string>("el", label));
-                foreach(var dimension in dimensions)
+                foreach (var dimension in dimensions)
                 {
                     content.Add(new KeyValuePair<string, string>(GetDimension(dimension.Dimension), dimension.Value));
                 }
 
+#if !DEBUG
                 await Client.PostAsync($"{ApiHost}/collect", new FormUrlEncodedContent(content.ToArray()));
+#endif
             }
             catch (Exception) { /* I don't care if this fails..*/ }
         }
@@ -90,11 +92,13 @@ namespace Wallcat.Services
         {
             try
             {
-                var content = GoogleAnalyticsSetup(); 
+                var content = GoogleAnalyticsSetup();
                 content.Add(new KeyValuePair<string, string>("t", "exception"));
                 content.Add(new KeyValuePair<string, string>("exd", exceptionDescription));
 
+#if !DEBUG
                 await Client.PostAsync($"{ApiHost}/collect", new FormUrlEncodedContent(content.ToArray()));
+#endif
             }
             catch (Exception) { /* I don't care if this fails..*/ }
         }

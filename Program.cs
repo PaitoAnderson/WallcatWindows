@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Wallcat.Services;
 using Wallcat.Util;
@@ -114,7 +113,6 @@ namespace Wallcat
                     _trayIcon.ShowBalloonTip(10 * 1000, "Welcome to Wallcat", $"Enjoy the {channel.title} channel!", ToolTipIcon.Info);
                 }
 
-                // Google Analytics
                 Properties.Settings.Default.UniqueIdentifier = Guid.NewGuid();
                 _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appInstalled).Wait();
             }
@@ -157,8 +155,15 @@ namespace Wallcat
                 var wallpaper = await _wallcatService.GetWallpaper(channel.id);
                 if (wallpaper.id == Properties.Settings.Default.CurrentWallpaper?.id) return;
                 var filePath = await DownloadFile.Get(wallpaper.url.o);
-                var style = Environment.OSVersion.Version.Major >= 8 ? SetWallpaper.Style.Span : SetWallpaper.Style.Fill;
-                SetWallpaper.Apply(filePath, style);
+
+                if (Environment.OSVersion.Version.Major >= 8)
+                {
+                    SetWallpaper.Apply(null, filePath, SetWallpaper.DesktopWallpaperPosition.Fill);
+                }
+                else
+                {
+                    SetWallpaperLegacy.Apply(filePath, SetWallpaper.DesktopWallpaperPosition.Fill);
+                }
 
                 // Update Settings
                 Properties.Settings.Default.CurrentChannel = channel;
