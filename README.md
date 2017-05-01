@@ -1,7 +1,7 @@
 Wallcat for Windows
 ==============================
 
-![Demo](https://github.com/PaitoAnderson/WallcatWindows/raw/master/demo.png)
+![Demo](https://cloud.githubusercontent.com/assets/11269635/25595114/e1e3df52-2ec3-11e7-8b38-38131e12a8bb.png)
 
 [Download Latest](https://github.com/PaitoAnderson/WallcatWindows/releases/latest)
 
