@@ -58,9 +58,8 @@ namespace Wallcat
 
     public class MyCustomApplicationContext : ApplicationContext
     {
-        private readonly NotifyIcon _trayIcon;
+        private NotifyIcon _trayIcon;
         private readonly ContextMenu _contextMenu;
-        private readonly IconAnimation _iconAnimation;
         private readonly WallcatService _wallcatService;
         private readonly GoogleAnalytics _googleAnalytics;
         private System.Threading.Timer _timer;
@@ -79,50 +78,49 @@ namespace Wallcat
                 ContextMenu = _contextMenu,
                 Visible = true
             };
-            _iconAnimation = new IconAnimation(ref _trayIcon);
-            _iconAnimation.Start();
 
-            // Add Menu items
-            var channels = _wallcatService.GetChannels().Result;
-            _contextMenu.MenuItems.Add(new MenuItem("Featured Channels") { Enabled = false });
-            _contextMenu.MenuItems.AddRange(channels.Select(channel => new MenuItem(channel.title, SelectChannel) { Tag = channel, Checked = IsCurrentChannel(channel) }).ToArray());
-            _contextMenu.MenuItems.AddRange(new[]
+            using (var iconAnimation = new IconAnimation(ref _trayIcon))
             {
-                new MenuItem("-") { Enabled = false },
-                new MenuItem("Create Channel...", (sender, args) => ChannelCreateWebpage()),
-                new MenuItem("Start at login", (sender, args) => CreateStartupShortcut()) { Checked = IsEnabledAtStartup() },
-                new MenuItem("-") { Enabled = false },
-                new MenuItem("Quit Wallcat", (sender, args) => Application.Exit())
-            });
-
-            // Set Current Image Info
-            if (Properties.Settings.Default.CurrentWallpaper != null)
-            {
-                UpdateMenuCurrentImage(Properties.Settings.Default.CurrentWallpaper);
-            }
-
-            // Onboarding
-            if (Properties.Settings.Default.CurrentChannel == null)
-            {
-                var channel = channels.FirstOrDefault(x => x.isDefault);
-                if (channel != null)
+                // Add Menu items
+                var channels = _wallcatService.GetChannels().Result;
+                _contextMenu.MenuItems.Add(new MenuItem("Featured Channels") { Enabled = false });
+                _contextMenu.MenuItems.AddRange(channels.Select(channel => new MenuItem(channel.title, SelectChannel) { Tag = channel, Checked = IsCurrentChannel(channel) }).ToArray());
+                _contextMenu.MenuItems.AddRange(new[]
                 {
-                    Properties.Settings.Default.CurrentChannel = channel;
-                    Properties.Settings.Default.Save();
+                    new MenuItem("-") { Enabled = false },
+                    new MenuItem("Create Channel...", (sender, args) => ChannelCreateWebpage()),
+                    new MenuItem("Start at login", (sender, args) => CreateStartupShortcut()) { Checked = IsEnabledAtStartup() },
+                    new MenuItem("-") { Enabled = false },
+                    new MenuItem("Quit Wallcat", (sender, args) => Application.Exit())
+                });
 
-                    _trayIcon.ShowBalloonTip(10 * 1000, "Welcome to Wallcat", $"Enjoy the {channel.title} channel!", ToolTipIcon.Info);
+                // Set Current Image Info
+                if (Properties.Settings.Default.CurrentWallpaper != null)
+                {
+                    UpdateMenuCurrentImage(Properties.Settings.Default.CurrentWallpaper);
                 }
 
-                Properties.Settings.Default.UniqueIdentifier = Guid.NewGuid();
-                _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appInstalled).Wait();
+                // Onboarding
+                if (Properties.Settings.Default.CurrentChannel == null)
+                {
+                    var channel = channels.FirstOrDefault(x => x.isDefault);
+                    if (channel != null)
+                    {
+                        Properties.Settings.Default.CurrentChannel = channel;
+                        Properties.Settings.Default.Save();
+
+                        _trayIcon.ShowBalloonTip(10 * 1000, "Welcome to Wallcat", $"Enjoy the {channel.title} channel!", ToolTipIcon.Info);
+                    }
+
+                    Properties.Settings.Default.UniqueIdentifier = Guid.NewGuid();
+                    _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appInstalled).Wait();
+                }
+
+                _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appLaunched).Wait();
+
+                UpdateWallpaper();
+                MidnightUpdate();
             }
-
-            _googleAnalytics.SubmitEvent(GoogleAnalyticsCategory.system, GoogleAnalyticsAction.appLaunched).Wait();
-
-            UpdateWallpaper();
-            MidnightUpdate();
-
-            _iconAnimation.Stop();
         }
 
         private void UpdateWallpaper()
@@ -137,9 +135,7 @@ namespace Wallcat
 
         private async void SelectChannel(object sender, EventArgs e)
         {
-            _iconAnimation.Start();
-
-            try
+            using (var iconAnimation = new IconAnimation(ref _trayIcon))
             {
                 if (Properties.Settings.Default.CurrentChannel != null && e != null)
                 {
@@ -192,10 +188,6 @@ namespace Wallcat
                         new DimensionTuple(GoogleAnalyticsDimension.channelTitle, channel.title)
                         });
                 }
-            }
-            finally
-            {
-                _iconAnimation.Stop();
             }
         }
 

@@ -1,8 +1,9 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
 
 namespace Wallcat.Util
 {
-    public class IconAnimation
+    public class IconAnimation : IDisposable
     {
         private readonly Timer _timer = new Timer { Interval = 500 };
         private readonly NotifyIcon _notifyIcon;
@@ -20,20 +21,16 @@ namespace Wallcat.Util
                 if (_currentIteration > Frames) _currentIteration = 0;
                 _notifyIcon.Icon = (_currentIteration == 0) ? Resources.AppIcon : Resources.AppIconAlt;
             };
+
+            // Start
+            _notifyIcon.Icon = Resources.AppIconAlt;
+            _currentIteration = 0;
+            _timer.Start();
         }
 
-        public void Start()
+        public void Dispose()
         {
-            if (_timer.Enabled == false)
-            {
-                _notifyIcon.Icon = Resources.AppIconAlt;
-                _currentIteration = 0;
-                _timer.Start();
-            }
-        }
-
-        public void Stop()
-        {
+            // Stop
             if (_timer.Enabled)
             {
                 _timer.Stop();
